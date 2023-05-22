@@ -1,6 +1,6 @@
 import { registerUser, verifyEmail } from "../repositories/auth.repository.js";
 
-export const signUp = async (req, res) => {
+export async function signUp (req, res) {
     const { name, email, password, confirmPassword } = req.body;
     const hash = bcrypt.hashSync(password, 10);
     if(password!==confirmPassword) return res.sendStatus(422)
@@ -10,13 +10,13 @@ export const signUp = async (req, res) => {
         if (isEmail.rowCount !== 0) return res.status(409).send("E-mail já está em uso!");
 
         await registerUser({ name, email, password: hash });
-        res.sendStatus(200);
+        return res.sendStatus(200);
     } catch (error) {
-        res.status(500).send(error.message);
+        return res.status(500).send(error.message);
     }
 };
 
-export const signIn = async (req, res) => {
+export async function signIn (req, res) {
     const { email, password } = req.body;
 
     try {
@@ -32,8 +32,9 @@ export const signIn = async (req, res) => {
 
         const token = jwt.sign(user.rows[0].id, process.env.SECRET_KEY);
 
-        res.status(200).send({ token: token });
+        await insertSession(token, user.rows[0].id);
+        return res.status(200).send({ token: token });
     } catch (error) {
-        res.status(500).send(error.message);
+        return res.status(500).send(error.message);
     }
 };
